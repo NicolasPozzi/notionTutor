@@ -1,0 +1,142 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==========================================
+// Users - Notion OAuth accounts
+// ==========================================
+model User {
+  id                String    @id @default(uuid()) @db.Uuid
+  notionUserId      String    @unique @map("notion_user_id")
+  email             String?
+  name              String?
+  avatarUrl         String?   @map("avatar_url")
+  notionToken       String    @map("notion_token") // TODO: encrypt AES-256-GCM
+  notionWorkspaceId String?   @map("notion_workspace_id")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  lastLoginAt       DateTime? @map("last_login_at")
+  deletedAt         DateTime? @map("deleted_at") // Soft delete RGPD
+
+  sessions  RevisionSession[]
+  questions Question[]
+  digests   Digest[]
+  streak    UserStreak?
+
+  @@map("users")
+}
+
+// ==========================================
+// Revision Sessions - Learning sessions
+// ==========================================
+model RevisionSession {
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String    @map("user_id") @db.Uuid
+  notionPageId     String    @map("notion_page_id")
+  notionPageTitle  String?   @map("notion_page_title") @db.VarChar(500)
+  status           String    @default("in_progress") // in_progress, completed, abandoned
+  questionsTotal   Int       @default(0) @map("questions_total")
+  questionsAnswered Int      @default(0) @map("questions_answered")
+  correctCount     Int       @default(0) @map("correct_count")
+  startedAt        DateTime  @default(now()) @map("started_at")
+  completedAt      DateTime? @map("completed_at")
+
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questions        Question[]
+  questionAttempts QuestionAttempt[]
+
+  @@index([userId, status], name: "idx_sessions_user_status")
+  @@map("revision_sessions")
+}
+
+// ==========================================
+// Questions - AI-generated questions
+// ==========================================
+model Question {
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String    @map("user_id") @db.Uuid
+  sessionId     String?   @map("session_id") @db.Uuid
+  notionPageId  String    @map("notion_page_id")
+  questionText  String    @map("question_text") // TODO: encrypt AES-256-GCM
+  answerExcerpt String?   @map("answer_excerpt") // TODO: encrypt AES-256-GCM
+  questionHash  String?   @map("question_hash") @db.VarChar(64)
+  timesAsked    Int       @default(1) @map("times_asked")
+  timesCorrect  Int       @default(0) @map("times_correct")
+  lastAskedAt   DateTime? @map("last_asked_at")
+  nextReviewAt  DateTime? @map("next_review_at") // Spaced repetition
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session  RevisionSession?  @relation(fields: [sessionId], references: [id])
+  attempts QuestionAttempt[]
+
+  @@index([userId, notionPageId], name: "idx_questions_user_page")
+  @@index([userId, nextReviewAt], name: "idx_questions_next_review")
+  @@map("questions")
+}
+
+// ==========================================
+// Question Attempts - Answer tracking
+// ==========================================
+model QuestionAttempt {
+  id          String   @id @default(uuid()) @db.Uuid
+  questionId  String   @map("question_id") @db.Uuid
+  sessionId   String?  @map("session_id") @db.Uuid
+  isCorrect   Boolean  @map("is_correct")
+  attemptedAt DateTime @default(now()) @map("attempted_at")
+
+  question Question         @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  session  RevisionSession? @relation(fields: [sessionId], references: [id])
+
+  @@map("question_attempts")
+}
+
+// ==========================================
+// Digests - Email digest configurations
+// ==========================================
+model Digest {
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String    @map("user_id") @db.Uuid
+  notionPageId     String    @map("notion_page_id")
+  notionPageTitle  String?   @map("notion_page_title") @db.VarChar(500)
+  frequency        String    @default("daily") // daily, weekly
+  sendTime         String    @default("08:00") @map("send_time") // HH:MM format
+  timezone         String    @default("Europe/Paris")
+  durationDays     Int?      @map("duration_days") // NULL = indefinite
+  startedAt        DateTime  @default(now()) @map("started_at")
+  endsAt           DateTime? @map("ends_at")
+  lastSentAt       DateTime? @map("last_sent_at")
+  unsubscribeToken String?   @unique @map("unsubscribe_token") @db.VarChar(64)
+  status           String    @default("active") // active, paused, completed
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status, sendTime], name: "idx_digests_send_time")
+  @@index([unsubscribeToken], name: "idx_digests_unsubscribe")
+  @@map("digests")
+}
+
+// ==========================================
+// User Streaks - Gamification
+// ==========================================
+model UserStreak {
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String    @unique @map("user_id") @db.Uuid
+  currentStreak    Int       @default(0) @map("current_streak")
+  longestStreak    Int       @default(0) @map("longest_streak")
+  lastActivityDate DateTime? @map("last_activity_date") @db.Date
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], name: "idx_streaks_user")
+  @@map("user_streaks")
+}

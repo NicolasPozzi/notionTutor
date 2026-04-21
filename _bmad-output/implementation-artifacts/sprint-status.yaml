@@ -47,7 +47,7 @@ development_status:
   # ==========================================
   epic-0: in-progress
   0-1-project-bootstrap-development-environment: done
-  0-2-database-setup-supabase-prisma: ready-for-dev
+  0-2-database-setup-supabase-prisma: in-progress
   0-3-cicd-pipeline-vercel-deployment: backlog
   0-4-design-system-foundations: backlog
   0-5-llm-integration-foundation-mock-testing: backlog
