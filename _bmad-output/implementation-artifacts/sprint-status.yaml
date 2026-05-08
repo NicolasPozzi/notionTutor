@@ -50,7 +50,7 @@ development_status:
   0-2-database-setup-supabase-prisma: done
   0-3-cicd-pipeline-vercel-deployment: done
   0-4-design-system-foundations: done
-  0-5-llm-integration-foundation-mock-testing: backlog
+  0-5-llm-integration-foundation-mock-testing: done
   epic-0-retrospective: optional
 
   # ==========================================
