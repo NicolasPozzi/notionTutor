@@ -56,8 +56,8 @@ development_status:
   # ==========================================
   # Epic 1: Authentification Notion & Confiance
   # ==========================================
-  epic-1: backlog
-  1-1-landing-page-login-notion: backlog
+  epic-1: in-progress
+  1-1-landing-page-login-notion: done
   1-2-notion-oauth-callback-user-creation: backlog
   1-3-session-management-re-login: backlog
   1-4-security-privacy-page: backlog
