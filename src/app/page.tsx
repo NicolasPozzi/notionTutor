@@ -1,10 +1,17 @@
 import Link from "next/link";
 
-export default function HomePage() {
+import { SessionExpiredBanner } from "@/components/session-expired-banner";
+
+export default function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   return (
     <main className="flex min-h-screen flex-col bg-background">
       {/* Hero Section */}
       <section className="flex flex-1 flex-col items-center justify-center px-6 py-16 text-center">
+        <SessionExpiredBanner searchParams={searchParams} />
         <h1 className="text-xl font-semibold text-text-primary">NotionTutor</h1>
         <p className="mt-2 text-lg text-text-secondary">Révisez vos notes Notion avec l&apos;IA</p>
         <p className="mt-4 max-w-md text-base text-text-secondary">
