@@ -145,3 +145,4 @@ Recommended extensions are listed in `.vscode/extensions.json`. Install them for
 ## 📄 License
 
 Private - All rights reserved.
+# NotionTutor
