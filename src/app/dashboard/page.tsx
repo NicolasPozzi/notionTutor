@@ -19,9 +19,14 @@ export default function DashboardPage() {
             <li>Sessions de révision IA (Epic 3)</li>
           </ul>
         </div>
-        <Link href="/" className="btn-secondary inline-block">
-          Retour à l&apos;accueil
-        </Link>
+        <div className="flex gap-3">
+          <Link href="/dashboard/profile" className="btn-primary inline-block">
+            Mon profil
+          </Link>
+          <Link href="/" className="btn-secondary inline-block">
+            Accueil
+          </Link>
+        </div>
       </div>
     </main>
   );
