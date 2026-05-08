@@ -8,17 +8,20 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      // NotionTutor Design System Colors
+      // NotionTutor Design System Colors (UX Spec aligned)
       colors: {
         background: "#FFFFFF",
-        surface: "#F7F7F7",
+        surface: "#F7F6F3",
         text: {
-          primary: "#000000",
-          secondary: "#6B7280",
+          primary: "#37352F",
+          secondary: "#787774",
         },
+        border: "#E9E9E7",
+        accent: "#2EAADC",
+        streak: "#E16259",
         feedback: {
-          success: "#22C55E",
-          warning: "#F97316",
+          success: "#0F7B6C",
+          warning: "#C4660A",
           error: "#EF4444",
         },
       },
@@ -26,14 +29,18 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
       },
-      // Font sizes following design system
+      // Font sizes following UX design system
       fontSize: {
-        xs: ["0.75rem", { lineHeight: "1rem" }], // 12px
-        sm: ["0.875rem", { lineHeight: "1.25rem" }], // 14px
-        base: ["1rem", { lineHeight: "1.5rem" }], // 16px
-        lg: ["1.125rem", { lineHeight: "1.75rem" }], // 18px
-        xl: ["1.5rem", { lineHeight: "2rem" }], // 24px
+        xs: ["0.75rem", { lineHeight: "1rem" }], // 12px - caption
+        sm: ["0.875rem", { lineHeight: "1.25rem" }], // 14px - body-small
+        base: ["1rem", { lineHeight: "1.5rem" }], // 16px - body
+        lg: ["1.125rem", { lineHeight: "1.75rem" }], // 18px - heading-2
+        question: ["1.25rem", { lineHeight: "1.75rem" }], // 20px - questions
+        xl: ["1.5rem", { lineHeight: "2rem" }], // 24px - heading-1
         "2xl": ["2rem", { lineHeight: "2.5rem" }], // 32px
+      },
+      fontWeight: {
+        question: "500",
       },
       // 8px base grid spacing
       spacing: {
