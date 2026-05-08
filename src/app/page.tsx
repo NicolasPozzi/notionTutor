@@ -6,9 +6,7 @@ export default function HomePage() {
         <h1 className="text-2xl font-bold text-text-primary">NotionTutor</h1>
 
         {/* Tagline */}
-        <p className="text-lg text-text-secondary">
-          Révisez vos notes Notion avec l&apos;IA
-        </p>
+        <p className="text-lg text-text-secondary">Révisez vos notes Notion avec l&apos;IA</p>
 
         {/* Value proposition */}
         <div className="space-y-4 rounded-lg bg-surface p-6">
@@ -38,9 +36,7 @@ export default function HomePage() {
         >
           Se connecter avec Notion
         </button>
-        <p className="text-xs text-text-secondary">
-          Authentification Notion à venir (Epic 1)
-        </p>
+        <p className="text-xs text-text-secondary">Authentification Notion à venir (Epic 1)</p>
       </div>
     </main>
   );
