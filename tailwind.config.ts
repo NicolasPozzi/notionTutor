@@ -19,6 +19,8 @@ const config: Config = {
         border: "#E9E9E7",
         accent: "#2EAADC",
         streak: "#E16259",
+        success: "#0F7B6C",
+        warning: "#C4660A",
         feedback: {
           success: "#0F7B6C",
           warning: "#C4660A",
@@ -68,6 +70,15 @@ const config: Config = {
       },
       minWidth: {
         tap: "44px",
+      },
+      keyframes: {
+        "fade-in": {
+          "0%": { opacity: "0", transform: "translateY(4px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+      },
+      animation: {
+        "fade-in": "fade-in 0.3s ease-out",
       },
     },
   },

@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import type { NotionPage } from "@/lib/adapters/notion/types";
@@ -11,8 +11,36 @@ interface PagePreviewProps {
 }
 
 export function PagePreview({ page, onClose }: PagePreviewProps) {
+  const router = useRouter();
   const [content, setContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [starting, setStarting] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/pages/${page.id}`)
+      .then((res) => res.json())
+      .then((data) => setContent(data.content ?? ""))
+      .catch(() => setContent("Impossible de charger le contenu."))
+      .finally(() => setLoading(false));
+  }, [page.id]);
+
+  const startRevision = async () => {
+    setStarting(true);
+    try {
+      const res = await fetch("/api/revisions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notionPageId: page.id }),
+      });
+
+      if (!res.ok) throw new Error("Erreur");
+      const data = await res.json();
+      router.push(`/dashboard/revise/${data.sessionId}`);
+    } catch {
+      setStarting(false);
+      alert("Impossible de démarrer la révision. Réessayez.");
+    }
+  };
 
   useEffect(() => {
     fetch(`/api/pages/${page.id}`)
@@ -57,9 +85,13 @@ export function PagePreview({ page, onClose }: PagePreviewProps) {
 
         {/* Actions */}
         <div className="flex gap-3">
-          <Link href={`/dashboard/revise/${page.id}`} className="btn-primary flex-1 text-center">
-            Réviser
-          </Link>
+          <button
+            onClick={startRevision}
+            disabled={starting}
+            className="btn-primary flex-1 disabled:opacity-50"
+          >
+            {starting ? "Démarrage…" : "Réviser"}
+          </button>
           <button onClick={onClose} className="btn-secondary flex-1">
             Fermer
           </button>
