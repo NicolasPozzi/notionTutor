@@ -15,6 +15,7 @@ export function PagePreview({ page, onClose }: PagePreviewProps) {
   const [content, setContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState(false);
+  const [enablingDigest, setEnablingDigest] = useState(false);
 
   useEffect(() => {
     fetch(`/api/pages/${page.id}`)
@@ -42,13 +43,27 @@ export function PagePreview({ page, onClose }: PagePreviewProps) {
     }
   };
 
-  useEffect(() => {
-    fetch(`/api/pages/${page.id}`)
-      .then((res) => res.json())
-      .then((data) => setContent(data.content ?? ""))
-      .catch(() => setContent("Impossible de charger le contenu."))
-      .finally(() => setLoading(false));
-  }, [page.id]);
+  const enableDigest = async () => {
+    setEnablingDigest(true);
+    try {
+      const res = await fetch("/api/digests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notionPageId: page.id, notionPageTitle: page.title }),
+      });
+
+      if (res.status === 409) {
+        alert("Un digest est déjà actif pour cette page.");
+        return;
+      }
+      if (!res.ok) throw new Error("Erreur");
+      router.push("/dashboard/digests");
+    } catch {
+      alert("Impossible d'activer le digest. Réessayez.");
+    } finally {
+      setEnablingDigest(false);
+    }
+  };
 
   // Truncate to ~500 chars for preview
   const preview = content && content.length > 500 ? content.slice(0, 500) + "…" : content;
@@ -92,8 +107,12 @@ export function PagePreview({ page, onClose }: PagePreviewProps) {
           >
             {starting ? "Démarrage…" : "Réviser"}
           </button>
-          <button onClick={onClose} className="btn-secondary flex-1">
-            Fermer
+          <button
+            onClick={enableDigest}
+            disabled={enablingDigest}
+            className="btn-secondary flex-1 disabled:opacity-50"
+          >
+            {enablingDigest ? "…" : "📧 Digest"}
           </button>
         </div>
       </div>

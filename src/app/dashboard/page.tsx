@@ -12,6 +12,9 @@ export default function DashboardPage() {
           <Link href="/dashboard/pages" className="btn-primary inline-block">
             📚 Mes pages Notion
           </Link>
+          <Link href="/dashboard/digests" className="btn-secondary inline-block">
+            📧 Mes digests
+          </Link>
           <Link href="/dashboard/profile" className="btn-secondary inline-block">
             Mon profil
           </Link>
