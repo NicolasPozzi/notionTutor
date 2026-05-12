@@ -43,16 +43,33 @@ export async function POST(request: Request) {
       },
     });
 
-    // 3. Generate questions via LLM
+    // 3. Find existing questions to reuse (spaced repetition)
+    // Priority: missed questions first, then due for review, then new
+    const existingQuestions = await prisma.question.findMany({
+      where: {
+        userId: session.userId,
+        notionPageId,
+        // Exclude mastered (correct 3+ times)
+        timesCorrect: { lt: 3 },
+      },
+      orderBy: [
+        { timesCorrect: "asc" }, // Missed questions first
+        { lastAskedAt: "asc" }, // Oldest asked first
+      ],
+      take: 3,
+    });
+
+    // 4. Generate new questions to fill remaining slots
+    const newCount = Math.max(2, 5 - existingQuestions.length);
     const generator = getQuestionGenerator();
     const result = await generator.generateQuestions({
       pageContent: pageContent.content,
-      count: 5,
+      count: newCount,
       notionPageId,
     });
 
-    // 4. Save questions to DB
-    const questions = await Promise.all(
+    // 5. Save new questions to DB
+    const newQuestions = await Promise.all(
       result.questions.map((q) =>
         prisma.question.create({
           data: {
@@ -67,16 +84,26 @@ export async function POST(request: Request) {
       )
     );
 
-    // 5. Update session with question count
+    // 6. Link existing questions to this session
+    if (existingQuestions.length > 0) {
+      await prisma.question.updateMany({
+        where: { id: { in: existingQuestions.map((q) => q.id) } },
+        data: { sessionId: revisionSession.id, lastAskedAt: new Date() },
+      });
+    }
+
+    const totalQuestions = existingQuestions.length + newQuestions.length;
+
+    // 7. Update session with question count
     await prisma.revisionSession.update({
       where: { id: revisionSession.id },
-      data: { questionsTotal: questions.length },
+      data: { questionsTotal: totalQuestions },
     });
 
     return NextResponse.json({
       sessionId: revisionSession.id,
       pageTitle: pageContent.title,
-      questionsTotal: questions.length,
+      questionsTotal: totalQuestions,
     });
   } catch (err) {
     console.error("Revision session creation error:", err);
