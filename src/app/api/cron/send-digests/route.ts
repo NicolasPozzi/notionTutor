@@ -6,13 +6,17 @@ import { getPageContent } from "@/lib/adapters/notion";
 import { decrypt } from "@/lib/auth/encryption";
 import { prisma } from "@/lib/db";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  // Created per request (not at module load) so `next build` doesn't need the key.
+  if (!process.env.RESEND_API_KEY) {
+    return NextResponse.json({ error: "RESEND_API_KEY not configured" }, { status: 500 });
+  }
+  const resend = new Resend(process.env.RESEND_API_KEY);
 
   const now = new Date();
   const currentTime = `${String(now.getUTCHours()).padStart(2, "0")}:00`;
