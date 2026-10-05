@@ -34,12 +34,13 @@ export function PagePreview({ page, onClose }: PagePreviewProps) {
         body: JSON.stringify({ notionPageId: page.id }),
       });
 
-      if (!res.ok) throw new Error("Erreur");
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? "Impossible de démarrer la révision.");
       router.push(`/dashboard/revise/${data.sessionId}`);
-    } catch {
+    } catch (err) {
       setStarting(false);
-      alert("Impossible de démarrer la révision. Réessayez.");
+      const message = err instanceof Error ? err.message : "Impossible de démarrer la révision.";
+      alert(`${message} Réessayez.`);
     }
   };
 

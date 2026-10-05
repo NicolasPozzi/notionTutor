@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 import type { NotionPage } from "@/lib/adapters/notion/types";
@@ -107,6 +108,9 @@ export default function PagesPage() {
   return (
     <main className="min-h-screen bg-background px-4 py-6">
       <div className="mx-auto max-w-2xl space-y-4">
+        <Link href="/dashboard" className="text-sm text-accent hover:underline">
+          ← Retour au tableau de bord
+        </Link>
         <h1 className="text-xl font-semibold text-text-primary">Mes pages Notion</h1>
 
         {/* Search */}
