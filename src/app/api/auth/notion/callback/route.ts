@@ -57,6 +57,7 @@ export async function GET(request: Request) {
         avatarUrl: notionUser.avatarUrl,
         notionToken: encryptedToken,
         notionWorkspaceId: tokenResponse.workspace_id,
+        notionWorkspaceName: tokenResponse.workspace_name,
         lastLoginAt: new Date(),
       },
       update: {
@@ -65,6 +66,7 @@ export async function GET(request: Request) {
         avatarUrl: notionUser.avatarUrl,
         notionToken: encryptedToken,
         notionWorkspaceId: tokenResponse.workspace_id,
+        notionWorkspaceName: tokenResponse.workspace_name,
         lastLoginAt: new Date(),
         deletedAt: null, // Reactivate if previously soft-deleted
       },

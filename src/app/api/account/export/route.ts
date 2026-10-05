@@ -20,6 +20,7 @@ export async function GET() {
       createdAt: true,
       lastLoginAt: true,
       notionWorkspaceId: true,
+      notionWorkspaceName: true,
     },
   });
 
@@ -69,6 +70,7 @@ export async function GET() {
       createdAt: user.createdAt,
       lastLoginAt: user.lastLoginAt,
       workspaceId: user.notionWorkspaceId,
+      workspaceName: user.notionWorkspaceName,
     },
     sessions: sessions.map((s) => ({
       notionPageId: s.notionPageId,

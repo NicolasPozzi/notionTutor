@@ -18,8 +18,9 @@ model User {
   email             String?
   name              String?
   avatarUrl         String?   @map("avatar_url")
-  notionToken       String    @map("notion_token") // TODO: encrypt AES-256-GCM
-  notionWorkspaceId String?   @map("notion_workspace_id")
+  notionToken         String?   @map("notion_token") // encrypted AES-256-GCM; null when Notion disconnected
+  notionWorkspaceId   String?   @map("notion_workspace_id")
+  notionWorkspaceName String?   @map("notion_workspace_name")
   createdAt         DateTime  @default(now()) @map("created_at")
   updatedAt         DateTime  @updatedAt @map("updated_at")
   lastLoginAt       DateTime? @map("last_login_at")

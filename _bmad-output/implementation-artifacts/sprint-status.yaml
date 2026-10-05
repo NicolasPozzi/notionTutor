@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-07
-last_updated: 2026-05-08
+last_updated: 2026-10-05
 project: NotionTutor
 project_key: NOKEY
 tracking_system: file-system
@@ -56,62 +56,64 @@ development_status:
   # ==========================================
   # Epic 1: Authentification Notion & Confiance
   # ==========================================
+  # Reconciled 2026-10-05 against git history (commits 532555d..0b1bc1c).
+  # Status reflects code actually committed & build-green (typecheck + lint pass).
   epic-1: in-progress
   1-1-landing-page-login-notion: done
-  1-2-notion-oauth-callback-user-creation: backlog
-  1-3-session-management-re-login: backlog
-  1-4-security-privacy-page: backlog
-  1-5-rgpd-data-export: backlog
-  1-6-account-deletion-rgpd: backlog
-  1-7-workspace-selection-oauth-scope: backlog
+  1-2-notion-oauth-callback-user-creation: done
+  1-3-session-management-re-login: done
+  1-4-security-privacy-page: done
+  1-5-rgpd-data-export: done
+  1-6-account-deletion-rgpd: done
+  1-7-workspace-selection-oauth-scope: review  # 2026-10-05: workspace shown + "Gérer" re-runs OAuth consent in /profile
   epic-1-retrospective: optional
 
   # ==========================================
   # Epic 2: Navigation & Exploration des Pages
   # ==========================================
-  epic-2: backlog
-  2-1-pages-list-notion-api-integration: backlog
-  2-2-notion-api-adapter-rate-limiting: backlog
-  2-3-page-search: backlog
-  2-4-page-preview-bottom-sheet: backlog
-  2-5-disconnect-reconnect-notion: backlog
-  2-6-empty-state-onboarding: backlog
+  epic-2: in-progress
+  2-1-pages-list-notion-api-integration: done
+  2-2-notion-api-adapter-rate-limiting: done
+  2-3-page-search: done
+  2-4-page-preview-bottom-sheet: done
+  2-5-disconnect-reconnect-notion: review  # 2026-10-05: POST /api/auth/notion/disconnect + reconnect UI
+  2-6-empty-state-onboarding: done
   epic-2-retrospective: optional
 
   # ==========================================
   # Epic 3: Session de Révision Core
   # ==========================================
-  epic-3: backlog
-  3-1-start-revision-session: backlog
-  3-2-ai-question-generation: backlog
-  3-3-question-display-ui: backlog
-  3-4-reveal-answer-self-evaluation: backlog
-  3-5-session-progress-completion: backlog
-  3-6-flag-previously-missed-questions: backlog
-  3-7-error-handling-llm-fallback: backlog
+  epic-3: done
+  3-1-start-revision-session: done
+  3-2-ai-question-generation: done
+  3-3-question-display-ui: done
+  3-4-reveal-answer-self-evaluation: done
+  3-5-session-progress-completion: done
+  3-6-flag-previously-missed-questions: done
+  3-7-error-handling-llm-fallback: done
   epic-3-retrospective: optional
 
   # ==========================================
   # Epic 4: Digest Email System
   # ==========================================
-  epic-4: backlog
-  4-1-enable-digest-for-page: backlog
-  4-2-configure-digest-frequency: backlog
-  4-3-configure-digest-duration: backlog
-  4-4-digest-email-generation-cron-job: backlog
-  4-5-digest-email-template-readwise-style: backlog
-  4-6-answer-question-from-email: backlog
-  4-7-unsubscribe-from-digest: backlog
+  epic-4: done
+  4-1-enable-digest-for-page: done
+  4-2-configure-digest-frequency: done
+  4-3-configure-digest-duration: done
+  4-4-digest-email-generation-cron-job: done
+  4-5-digest-email-template-readwise-style: done
+  4-6-answer-question-from-email: done
+  4-7-unsubscribe-from-digest: done
   epic-4-retrospective: optional
 
   # ==========================================
   # Epic 5: Historique & Progression (Nice-to-have)
   # ==========================================
-  epic-5: backlog
-  5-1-session-history-view: backlog
-  5-2-question-attempt-history: backlog
-  5-3-spaced-repetition-prioritize-missed-questions: backlog
-  5-4-skip-mastered-questions: backlog
-  5-5-revision-streaks: backlog
-  5-6-progress-dashboard: backlog
+  epic-5: done
+  5-1-session-history-view: done
+  5-2-question-attempt-history: done
+  5-3-spaced-repetition-prioritize-missed-questions: done
+  5-4-skip-mastered-questions: done
+  5-5-revision-streaks: done
+  5-6-progress-dashboard: done
   epic-5-retrospective: optional

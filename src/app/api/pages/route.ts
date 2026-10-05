@@ -20,13 +20,24 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
+  // Notion disconnected (Story 2.5): return an empty, well-formed result so the
+  // UI can render the reconnect empty state instead of an error.
+  if (!user.notionToken) {
+    return NextResponse.json({
+      pages: [],
+      hasMore: false,
+      nextCursor: null,
+      notionConnected: false,
+    });
+  }
+
   const url = new URL(request.url);
   const cursor = url.searchParams.get("cursor");
 
   try {
     const token = decrypt(user.notionToken);
     const result = await searchPages(token, cursor);
-    return NextResponse.json(result);
+    return NextResponse.json({ ...result, notionConnected: true });
   } catch (err) {
     console.error("Notion pages fetch error:", err);
 

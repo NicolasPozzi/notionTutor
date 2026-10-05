@@ -22,6 +22,13 @@ export async function GET(_request: Request, { params }: { params: Promise<{ pag
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
+  if (!user.notionToken) {
+    return NextResponse.json(
+      { error: "Notion déconnecté", notionConnected: false },
+      { status: 409 }
+    );
+  }
+
   try {
     const token = decrypt(user.notionToken);
     const content = await getPageContent(token, pageId);

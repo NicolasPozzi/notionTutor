@@ -20,6 +20,8 @@ export async function GET() {
       avatarUrl: true,
       createdAt: true,
       lastLoginAt: true,
+      notionToken: true,
+      notionWorkspaceName: true,
     },
   });
 
@@ -27,5 +29,15 @@ export async function GET() {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  return NextResponse.json({ user });
+  // Never leak the token itself — only expose whether Notion is connected.
+  const notionConnected = user.notionToken !== null;
+  const { notionToken: _notionToken, ...safeUser } = user;
+  void _notionToken;
+
+  return NextResponse.json({
+    user: {
+      ...safeUser,
+      notionConnected,
+    },
+  });
 }

@@ -28,6 +28,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
+  if (!user.notionToken) {
+    return NextResponse.json(
+      { error: "Notion déconnecté", notionConnected: false },
+      { status: 409 }
+    );
+  }
+
   try {
     // 1. Fetch page content from Notion (ephemeral)
     const token = decrypt(user.notionToken);

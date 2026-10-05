@@ -15,6 +15,7 @@ export default function PagesPage() {
   const [hasMore, setHasMore] = useState(false);
   const [cursor, setCursor] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [notionConnected, setNotionConnected] = useState(true);
 
   const fetchPages = useCallback(async (nextCursor?: string | null) => {
     try {
@@ -27,6 +28,7 @@ export default function PagesPage() {
       }
 
       const data = await res.json();
+      setNotionConnected(data.notionConnected !== false);
       setPages((prev) => (nextCursor ? [...prev, ...data.pages] : data.pages));
       setHasMore(data.hasMore);
       setCursor(data.nextCursor);
@@ -62,6 +64,21 @@ export default function PagesPage() {
         <button onClick={() => window.location.reload()} className="btn-secondary">
           Réessayer
         </button>
+      </main>
+    );
+  }
+
+  // Notion disconnected (Story 2.5)
+  if (!notionConnected) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background p-6 text-center">
+        <p className="text-lg font-medium text-text-primary">Notion est déconnecté</p>
+        <p className="max-w-sm text-sm text-text-secondary">
+          Reconnectez votre workspace Notion pour retrouver vos pages et reprendre vos révisions.
+        </p>
+        <a href="/api/auth/notion" className="btn-primary">
+          🔗 Reconnecter Notion
+        </a>
       </main>
     );
   }
