@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { decryptField } from "@/lib/auth/encryption";
 import { verifySession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 
@@ -48,6 +49,8 @@ export async function GET(
 
   const questions = revisionSession.questions.map((q) => ({
     ...q,
+    questionText: decryptField(q.questionText),
+    answerExcerpt: decryptField(q.answerExcerpt),
     previouslyMissed: previouslyMissedIds.has(q.id),
   }));
 

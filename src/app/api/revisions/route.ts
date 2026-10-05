@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getQuestionGenerator } from "@/lib/adapters/llm";
 import { getPageContent } from "@/lib/adapters/notion";
-import { decrypt } from "@/lib/auth/encryption";
+import { decrypt, encryptField } from "@/lib/auth/encryption";
 import { verifySession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 
@@ -83,8 +83,8 @@ export async function POST(request: Request) {
             userId: session.userId,
             sessionId: revisionSession.id,
             notionPageId,
-            questionText: q.question,
-            answerExcerpt: q.answerExcerpt,
+            questionText: encryptField(q.question),
+            answerExcerpt: encryptField(q.answerExcerpt),
             lastAskedAt: new Date(),
           },
         })

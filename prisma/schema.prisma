@@ -65,8 +65,8 @@ model Question {
   userId        String    @map("user_id") @db.Uuid
   sessionId     String?   @map("session_id") @db.Uuid
   notionPageId  String    @map("notion_page_id")
-  questionText  String    @map("question_text") // TODO: encrypt AES-256-GCM
-  answerExcerpt String?   @map("answer_excerpt") // TODO: encrypt AES-256-GCM
+  questionText  String    @map("question_text") // encrypted (encryptField, "enc:v1:" prefix)
+  answerExcerpt String?   @map("answer_excerpt") // encrypted (encryptField, "enc:v1:" prefix)
   questionHash  String?   @map("question_hash") @db.VarChar(64)
   timesAsked    Int       @default(1) @map("times_asked")
   timesCorrect  Int       @default(0) @map("times_correct")

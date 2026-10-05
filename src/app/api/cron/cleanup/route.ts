@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { ENCRYPTED_FIELD_PREFIX, encryptField, isEncryptedField } from "@/lib/auth/encryption";
 import { prisma } from "@/lib/db";
 
 export async function GET(request: Request) {
@@ -29,10 +30,43 @@ export async function GET(request: Request) {
     data: { status: "abandoned" },
   });
 
+  const encryptedQuestions = await encryptLegacyQuestions();
+
   return NextResponse.json({
     status: "ok",
     job: "cleanup",
     expiredDigests: expired.count,
     abandonedSessions: abandoned.count,
+    encryptedQuestions,
   });
+}
+
+const LEGACY_BATCH_SIZE = 500;
+
+/**
+ * Encrypt question rows written in plaintext before field encryption existed.
+ * Runs here (in prod, with the real ENCRYPTION_KEY) rather than as a local
+ * script. Idempotent: already-encrypted rows are skipped by the prefix filter.
+ */
+async function encryptLegacyQuestions(): Promise<number> {
+  const legacy = await prisma.question.findMany({
+    where: { NOT: { questionText: { startsWith: ENCRYPTED_FIELD_PREFIX } } },
+    select: { id: true, questionText: true, answerExcerpt: true },
+    take: LEGACY_BATCH_SIZE,
+  });
+
+  for (const q of legacy) {
+    await prisma.question.update({
+      where: { id: q.id },
+      data: {
+        questionText: encryptField(q.questionText),
+        answerExcerpt:
+          q.answerExcerpt === null || isEncryptedField(q.answerExcerpt)
+            ? q.answerExcerpt
+            : encryptField(q.answerExcerpt),
+      },
+    });
+  }
+
+  return legacy.length;
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { decryptField } from "@/lib/auth/encryption";
 import { verifySession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 
@@ -83,7 +84,7 @@ export async function GET() {
       completedAt: s.completedAt,
     })),
     questionAttempts: attempts.map((a) => ({
-      questionText: a.question.questionText,
+      questionText: decryptField(a.question.questionText),
       notionPageId: a.question.notionPageId,
       isCorrect: a.isCorrect,
       attemptedAt: a.attemptedAt,

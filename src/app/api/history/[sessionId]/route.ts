@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { decryptField } from "@/lib/auth/encryption";
 import { verifySession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 
@@ -52,5 +53,14 @@ export async function GET(
     },
   });
 
-  return NextResponse.json({ session: revisionSession, attempts });
+  const decryptedAttempts = attempts.map((a) => ({
+    ...a,
+    question: {
+      ...a.question,
+      questionText: decryptField(a.question.questionText),
+      answerExcerpt: decryptField(a.question.answerExcerpt),
+    },
+  }));
+
+  return NextResponse.json({ session: revisionSession, attempts: decryptedAttempts });
 }

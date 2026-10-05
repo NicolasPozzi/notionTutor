@@ -45,3 +45,31 @@ export function decrypt(encryptedBase64: string): string {
 
   return decipher.update(ciphertext) + decipher.final("utf8");
 }
+
+// ─── Content fields (question text, answer excerpts) ───────
+
+export const ENCRYPTED_FIELD_PREFIX = "enc:v1:";
+
+/** Whether a stored field value is already encrypted with encryptField(). */
+export function isEncryptedField(value: string): boolean {
+  return value.startsWith(ENCRYPTED_FIELD_PREFIX);
+}
+
+/** Encrypt a content field for storage, tagged so it can be told apart from legacy plaintext. */
+export function encryptField(plaintext: string): string;
+export function encryptField(plaintext: string | null): string | null;
+export function encryptField(plaintext: string | null): string | null {
+  if (plaintext === null) return null;
+  return ENCRYPTED_FIELD_PREFIX + encrypt(plaintext);
+}
+
+/**
+ * Decrypt a content field. Values without the prefix are legacy plaintext rows
+ * written before encryption was introduced and are returned unchanged.
+ */
+export function decryptField(value: string): string;
+export function decryptField(value: string | null): string | null;
+export function decryptField(value: string | null): string | null {
+  if (value === null || !isEncryptedField(value)) return value;
+  return decrypt(value.slice(ENCRYPTED_FIELD_PREFIX.length));
+}
