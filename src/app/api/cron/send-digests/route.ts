@@ -5,6 +5,7 @@ import { getQuestionGenerator } from "@/lib/adapters/llm";
 import { getPageContent } from "@/lib/adapters/notion";
 import { decrypt } from "@/lib/auth/encryption";
 import { prisma } from "@/lib/db";
+import { isDigestDue } from "@/lib/digests/schedule";
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
@@ -19,19 +20,19 @@ export async function GET(request: Request) {
   const resend = new Resend(process.env.RESEND_API_KEY);
 
   const now = new Date();
-  const currentTime = `${String(now.getUTCHours()).padStart(2, "0")}:00`;
 
-  // Find active digests due to be sent
-  const digests = await prisma.digest.findMany({
+  // The cron runs once a day, so sendTime can't be honored per hour: every
+  // active digest is considered, and frequency decides whether it's due today.
+  const activeDigests = await prisma.digest.findMany({
     where: {
       status: "active",
-      sendTime: currentTime,
       OR: [{ endsAt: null }, { endsAt: { gt: now } }],
     },
     include: {
       user: { select: { email: true, name: true, notionToken: true } },
     },
   });
+  const digests = activeDigests.filter((digest) => isDigestDue(digest, now));
 
   let sent = 0;
   let errors = 0;
@@ -63,7 +64,8 @@ export async function GET(request: Request) {
 
       // Send email via Resend
       await resend.emails.send({
-        from: "NotionTutor <digest@notiontutor.com>",
+        // Must be on a domain verified in Resend.
+        from: process.env.DIGEST_FROM_EMAIL ?? "NotionTutor <digest@notiontutor.com>",
         to: digest.user.email,
         subject: `📚 ${digest.notionPageTitle ?? "Votre révision"} — Question du jour`,
         html: buildDigestEmail({
@@ -107,7 +109,26 @@ interface DigestEmailData {
   unsubscribeUrl: string;
 }
 
-function buildDigestEmail(data: DigestEmailData): string {
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function buildDigestEmail(raw: DigestEmailData): string {
+  // Notion content and AI output are untrusted text: escape before inlining.
+  const data = {
+    userName: escapeHtml(raw.userName),
+    pageTitle: escapeHtml(raw.pageTitle),
+    highlight: escapeHtml(raw.highlight),
+    question: escapeHtml(raw.question),
+    answer: escapeHtml(raw.answer),
+    unsubscribeUrl: escapeHtml(raw.unsubscribeUrl),
+  };
+
   return `<!DOCTYPE html>
 <html lang="fr">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">

@@ -87,8 +87,7 @@ export default function DigestsPage() {
                     {digest.notionPageTitle ?? "Page sans titre"}
                   </p>
                   <p className="text-xs text-text-secondary">
-                    {digest.frequency === "daily" ? "Quotidien" : "Hebdomadaire"} à{" "}
-                    {digest.sendTime}
+                    {digest.frequency === "daily" ? "Chaque matin" : "Une fois par semaine"}
                     {digest.status === "paused" && (
                       <span className="ml-2 text-warning">• En pause</span>
                     )}
