@@ -129,10 +129,17 @@ export default function ProfilePage() {
                 <p className="text-sm font-medium text-text-primary">
                   {user.notionConnected ? "Connecté" : "Déconnecté"}
                 </p>
-                <p className="truncate text-xs text-text-secondary">
-                  {user.notionConnected
-                    ? (user.notionWorkspaceName ?? "Workspace Notion")
-                    : "Aucun workspace connecté"}
+                <p className="truncate text-sm text-text-secondary">
+                  {user.notionConnected ? (
+                    <>
+                      Workspace :{" "}
+                      <span className="font-medium text-text-primary">
+                        {user.notionWorkspaceName ?? "nom indisponible"}
+                      </span>
+                    </>
+                  ) : (
+                    "Aucun workspace connecté"
+                  )}
                 </p>
               </div>
               <span
