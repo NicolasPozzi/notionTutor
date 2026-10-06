@@ -64,7 +64,20 @@ npm run lint:fix     # Fix ESLint issues
 npm run format       # Format code with Prettier
 npm run format:check # Check formatting
 npm run typecheck    # Run TypeScript compiler
+npm run test         # Unit & API route tests (Vitest)
+npm run test:e2e     # Smoke tests on the production build (Playwright, run `npm run build` first)
+npm run ci           # typecheck + lint + format:check + test
 ```
+
+## 🧪 Tests & CI
+
+- `tests/unit/`: Vitest. Pure logic (encryption, digest scheduling) and API routes with
+  Prisma, Notion, the LLM and Resend mocked; no network or database needed.
+- `tests/e2e/`: Playwright smoke tests against `next start`. They catch client-side crashes
+  (e.g. hydration errors) that typecheck and the build don't. First run:
+  `npx playwright install chromium`.
+- `.github/workflows/ci.yml` runs typecheck, lint, format, unit tests, build and smoke tests
+  on every push to `main` and every pull request.
 
 ## 🎨 Design System
 

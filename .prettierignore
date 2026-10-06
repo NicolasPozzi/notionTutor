@@ -24,3 +24,6 @@ _bmad/
 _bmad-output/
 docs/
 *.md
+
+# Local tool settings
+.claude/
