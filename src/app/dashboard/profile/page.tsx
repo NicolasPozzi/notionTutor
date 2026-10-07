@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -96,11 +95,15 @@ export default function ProfilePage() {
         <div className="card-default space-y-3">
           <div className="flex items-center gap-3">
             {user.avatarUrl && (
-              <Image
+              // Plain <img>: Notion avatars come from various CDNs that next/image
+              // would reject, and the image optimizer is disabled on purpose.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
                 src={user.avatarUrl}
                 alt=""
                 width={40}
                 height={40}
+                referrerPolicy="no-referrer"
                 className="h-10 w-10 rounded-full"
               />
             )}

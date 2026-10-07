@@ -1,9 +1,17 @@
 import { expect, test, type Page } from "@playwright/test";
 
-/** Collect uncaught client-side errors (e.g. React hydration crashes). */
+/**
+ * Collect uncaught client-side errors (e.g. React hydration crashes) and
+ * Content-Security-Policy violations (a too-strict CSP silently breaks pages).
+ */
 function trackClientErrors(page: Page): string[] {
   const errors: string[] = [];
   page.on("pageerror", (err) => errors.push(err.message));
+  page.on("console", (msg) => {
+    if (msg.type() === "error" && /Content Security Policy/i.test(msg.text())) {
+      errors.push(msg.text());
+    }
+  });
   return errors;
 }
 
@@ -71,6 +79,32 @@ test("favicon and apple touch icon are declared and served", async ({ page, requ
     const res = await request.get(href!);
     expect(res.status(), href!).toBe(200);
   }
+});
+
+test.describe("security hardening", () => {
+  test("security headers are served and the framework isn't advertised", async ({ request }) => {
+    for (const path of ["/", "/api/health"]) {
+      const headers = (await request.get(path)).headers();
+      expect(headers["content-security-policy"], path).toContain("frame-ancestors 'none'");
+      expect(headers["content-security-policy"], path).not.toContain("unsafe-eval");
+      expect(headers["x-frame-options"], path).toBe("DENY");
+      expect(headers["x-content-type-options"], path).toBe("nosniff");
+      expect(headers["referrer-policy"], path).toBe("strict-origin-when-cross-origin");
+      expect(headers["strict-transport-security"], path).toContain("max-age=");
+      expect(headers["x-powered-by"], path).toBeUndefined();
+    }
+  });
+
+  test("image optimizer refuses remote URLs", async ({ request }) => {
+    const url = encodeURIComponent("https://www.notion.so/images/favicon.ico");
+    const res = await request.get(`/_next/image?url=${url}&w=64&q=75`);
+    expect(res.status()).toBeGreaterThanOrEqual(400);
+  });
+
+  test("nested paths with a dot are not served anonymously", async ({ page }) => {
+    await page.goto("/dashboard/revise/x.png");
+    await expect(page).toHaveURL(/\/$/);
+  });
 });
 
 test("health endpoint responds", async ({ request }) => {

@@ -13,6 +13,8 @@ const PUBLIC_PATHS = [
   "/api/digests/unsubscribe",
 ];
 
+const TOP_LEVEL_STATIC_FILE = /^\/[^/]+\.(?:svg|png|jpe?g|gif|webp|ico|txt|xml|webmanifest)$/i;
+
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(path + "/"));
 }
@@ -33,8 +35,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Allow static assets and Next.js internals
-  if (pathname.startsWith("/_next") || pathname.includes(".")) {
+  // Allow Next.js internals and top-level static files (icon.svg, apple-icon.png…).
+  // Only root-level files: a nested path like /dashboard/revise/x.png is a page
+  // route and must stay protected (a bare `includes(".")` let it through).
+  if (pathname.startsWith("/_next") || TOP_LEVEL_STATIC_FILE.test(pathname)) {
     return NextResponse.next();
   }
 
