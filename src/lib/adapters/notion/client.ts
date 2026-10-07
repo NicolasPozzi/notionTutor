@@ -6,10 +6,38 @@ const NOTION_API = "https://api.notion.com/v1";
 const NOTION_VERSION = "2022-06-28";
 const MAX_RETRIES = 3;
 const PAGE_SIZE = 100;
+const REQUEST_TIMEOUT_MS = 10_000;
+const MAX_RETRY_WAIT_MS = 5_000;
+
+/** A Notion API error response, with its HTTP status. */
+export class NotionApiError extends Error {
+  constructor(
+    readonly status: number,
+    message: string
+  ) {
+    super(message);
+    this.name = "NotionApiError";
+  }
+}
+
+/**
+ * Only real outages open the circuit: 5xx, rate limiting that persisted
+ * through retries, network errors and timeouts. A 4xx (page deleted or not
+ * shared, token revoked, invalid ID) proves Notion answered — counting it
+ * let 5 failing requests from one user cut Notion off for everyone,
+ * including every remaining digest of the daily cron.
+ */
+export function isNotionOutage(error: unknown): boolean {
+  if (error instanceof NotionApiError) {
+    return error.status >= 500 || error.status === 429;
+  }
+  return true; // network error, timeout, unexpected failure
+}
 
 const circuitBreaker = new CircuitBreaker({
   failureThreshold: 5,
   resetTimeoutMs: 60_000,
+  isOutage: isNotionOutage,
 });
 
 async function notionFetch(
@@ -23,6 +51,7 @@ async function notionFetch(
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       const response = await fetch(`${NOTION_API}${path}`, {
         ...options,
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
         headers: {
           Authorization: `Bearer ${token}`,
           "Notion-Version": NOTION_VERSION,
@@ -33,24 +62,25 @@ async function notionFetch(
 
       if (response.ok) return response;
 
-      // Rate limited - exponential backoff
+      // Rate limited - backoff (bounded, even if Retry-After is huge)
       if (response.status === 429) {
-        const retryAfter = response.headers.get("Retry-After");
-        const waitMs = retryAfter ? parseInt(retryAfter, 10) * 1000 : Math.pow(2, attempt) * 1000;
-        await sleep(waitMs);
+        lastError = new NotionApiError(429, "Notion API rate limited");
+        const retryAfter = Number(response.headers.get("Retry-After"));
+        const waitMs = retryAfter > 0 ? retryAfter * 1000 : Math.pow(2, attempt) * 1000;
+        await sleep(Math.min(waitMs, MAX_RETRY_WAIT_MS));
         continue;
       }
 
       // Server error - retry
       if (response.status >= 500) {
-        lastError = new Error(`Notion API error: ${response.status}`);
+        lastError = new NotionApiError(response.status, `Notion API error: ${response.status}`);
         await sleep(Math.pow(2, attempt) * 1000);
         continue;
       }
 
       // Client error - don't retry
       const body = await response.text();
-      throw new Error(`Notion API ${response.status}: ${body}`);
+      throw new NotionApiError(response.status, `Notion API ${response.status}: ${body}`);
     }
 
     throw lastError ?? new Error("Notion API: max retries exceeded");

@@ -5,6 +5,7 @@ import { getPageContent } from "@/lib/adapters/notion";
 import { decrypt, encryptField } from "@/lib/auth/encryption";
 import { verifySession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { MAX_REVISIONS_PER_DAY, revisionQuotaWindowStart } from "@/lib/limits";
 
 export async function POST(request: Request) {
   const session = await verifySession();
@@ -32,6 +33,19 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "Notion déconnecté", notionConnected: false },
       { status: 409 }
+    );
+  }
+
+  // Quota: each revision costs a Notion fetch and an OpenAI call.
+  const recentRevisions = await prisma.revisionSession.count({
+    where: { userId: session.userId, startedAt: { gte: revisionQuotaWindowStart() } },
+  });
+  if (recentRevisions >= MAX_REVISIONS_PER_DAY) {
+    return NextResponse.json(
+      {
+        error: `Limite atteinte : ${MAX_REVISIONS_PER_DAY} révisions par 24 h. Revenez un peu plus tard.`,
+      },
+      { status: 429 }
     );
   }
 
