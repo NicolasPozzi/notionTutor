@@ -28,30 +28,66 @@ export default function SecurityPage() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-lg font-semibold text-text-primary">🗑️ Aucun contenu stocké</h2>
+          <h2 className="text-lg font-semibold text-text-primary">
+            🗑️ Vos notes ne sont pas stockées
+          </h2>
           <p className="text-sm text-text-secondary">
-            Le contenu de vos notes est traité de manière{" "}
-            <strong className="text-text-primary">éphémère</strong> : il est lu pour générer des
-            questions, puis immédiatement supprimé de notre mémoire. Seules les questions générées
-            sont conservées.
+            Le contenu de vos pages est lu{" "}
+            <strong className="text-text-primary">uniquement au moment</strong> de générer des
+            questions, puis n&apos;est pas conservé. Nous gardons seulement les questions générées
+            et, pour chacune, un court extrait de réponse, afin de vous les reproposer plus tard.
+          </p>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold text-text-primary">🤖 Génération par IA</h2>
+          <p className="text-sm text-text-secondary">
+            Pour créer les questions d&apos;une révision ou d&apos;un digest, le texte de la page
+            concernée est envoyé à l&apos;API d&apos;
+            <strong className="text-text-primary">OpenAI</strong> (États-Unis). Selon la politique
+            d&apos;OpenAI pour son API, ces données ne servent pas à entraîner ses modèles et sont
+            conservées au maximum 30 jours pour la détection des abus, puis supprimées.
           </p>
         </section>
 
         <section className="space-y-4">
           <h2 className="text-lg font-semibold text-text-primary">🔐 Chiffrement AES-256</h2>
           <p className="text-sm text-text-secondary">
-            Vos tokens d&apos;authentification Notion et les questions générées sont chiffrés avec
-            l&apos;algorithme <strong className="text-text-primary">AES-256-GCM</strong>, le même
-            standard utilisé par les banques.
+            Vos tokens d&apos;authentification Notion, les questions générées et leurs extraits de
+            réponse sont chiffrés avec l&apos;algorithme{" "}
+            <strong className="text-text-primary">AES-256-GCM</strong> avant d&apos;être
+            enregistrés.
           </p>
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-lg font-semibold text-text-primary">🇪🇺 Hébergement en Europe</h2>
+          <h2 className="text-lg font-semibold text-text-primary">🌍 Où sont vos données</h2>
           <p className="text-sm text-text-secondary">
-            Toutes vos données sont hébergées en{" "}
-            <strong className="text-text-primary">Europe (Paris)</strong>, conformément au RGPD.
+            Votre compte, vos questions et votre historique sont stockés en{" "}
+            <strong className="text-text-primary">Europe</strong>. Certains services que nous
+            utilisons sont situés hors de l&apos;Union européenne :
           </p>
+          <ul className="space-y-2 text-sm text-text-secondary">
+            <li>
+              <strong className="text-text-primary">Supabase</strong> : base de données, en Irlande
+            </li>
+            <li>
+              <strong className="text-text-primary">Vercel</strong> : hébergement de
+              l&apos;application, serveurs à Paris
+            </li>
+            <li>
+              <strong className="text-text-primary">OpenAI</strong> : génération des questions, aux
+              États-Unis
+            </li>
+            <li>
+              <strong className="text-text-primary">Resend</strong> : envoi des emails de digest
+              (qui contiennent une question et un extrait de votre page), aux États-Unis
+            </li>
+            <li>
+              <strong className="text-text-primary">Notion</strong> : source de vos pages, que nous
+              lisons sans jamais les modifier
+            </li>
+          </ul>
         </section>
 
         <section className="space-y-4">
