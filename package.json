@@ -6,8 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint --dir src --dir tests",
-    "lint:fix": "next lint --fix --dir src --dir tests",
+    "lint": "eslint src tests",
+    "lint:fix": "eslint --fix src tests",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
@@ -35,6 +35,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.7",
     "@playwright/test": "^1.63.0",
     "@types/node": "^22.20.5",
     "@types/pg": "^8.23.1",
@@ -42,7 +43,7 @@
     "@types/react-dom": "^19.3.0",
     "autoprefixer": "^10.4.20",
     "dotenv": "^17.4.2",
-    "eslint": "^8.57.1",
+    "eslint": "^9.39.5",
     "eslint-config-next": "^15.5.27",
     "eslint-config-prettier": "^10.1.1",
     "postcss": "^8.5.3",
