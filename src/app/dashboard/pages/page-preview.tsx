@@ -57,7 +57,11 @@ export function PagePreview({ page, onClose }: PagePreviewProps) {
         alert("Un digest est déjà actif pour cette page.");
         return;
       }
-      if (!res.ok) throw new Error("Erreur");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error ?? "Impossible d'activer le digest. Réessayez.");
+        return;
+      }
       router.push("/dashboard/digests");
     } catch {
       alert("Impossible d'activer le digest. Réessayez.");

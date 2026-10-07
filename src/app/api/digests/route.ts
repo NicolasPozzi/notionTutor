@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 
 import { verifySession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { MAX_ACTIVE_DIGESTS } from "@/lib/limits";
 
 export async function GET() {
   const session = await verifySession();
@@ -61,6 +62,19 @@ export async function POST(request: Request) {
 
   if (existing) {
     return NextResponse.json({ error: "Digest already active for this page" }, { status: 409 });
+  }
+
+  // Quota: every active digest costs a Notion fetch and an OpenAI call per day.
+  const activeDigests = await prisma.digest.count({
+    where: { userId: session.userId, status: { not: "completed" } },
+  });
+  if (activeDigests >= MAX_ACTIVE_DIGESTS) {
+    return NextResponse.json(
+      {
+        error: `Limite atteinte : ${MAX_ACTIVE_DIGESTS} digests actifs maximum. Supprimez-en un pour en ajouter un autre.`,
+      },
+      { status: 429 }
+    );
   }
 
   const now = new Date();

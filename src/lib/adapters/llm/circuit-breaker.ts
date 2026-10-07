@@ -7,6 +7,13 @@ interface CircuitBreakerOptions {
   failureThreshold: number;
   /** Time in ms before attempting to close (default: 60000) */
   resetTimeoutMs: number;
+  /**
+   * Whether an error means the service is down (default: every error).
+   * Errors that prove the service answered (e.g. HTTP 4xx caused by the
+   * caller's input) should return false: they count as a healthy response,
+   * so one user's bad requests can't open the circuit for everyone.
+   */
+  isOutage: (error: unknown) => boolean;
 }
 
 export class CircuitBreaker {
@@ -19,6 +26,7 @@ export class CircuitBreaker {
     this.options = {
       failureThreshold: options?.failureThreshold ?? 5,
       resetTimeoutMs: options?.resetTimeoutMs ?? 60_000,
+      isOutage: options?.isOutage ?? (() => true),
     };
   }
 
@@ -36,7 +44,11 @@ export class CircuitBreaker {
       this.onSuccess();
       return result;
     } catch (error) {
-      this.onFailure();
+      if (this.options.isOutage(error)) {
+        this.onFailure();
+      } else {
+        this.onSuccess();
+      }
       throw error;
     }
   }
