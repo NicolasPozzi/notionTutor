@@ -62,6 +62,45 @@ export async function GET() {
     orderBy: { attemptedAt: "desc" },
   });
 
+  // All generated questions (including never-answered ones) with their excerpts
+  const questions = await prisma.question.findMany({
+    where: { userId: session.userId },
+    select: {
+      notionPageId: true,
+      questionText: true,
+      answerExcerpt: true,
+      timesAsked: true,
+      timesCorrect: true,
+      lastAskedAt: true,
+      nextReviewAt: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const digests = await prisma.digest.findMany({
+    where: { userId: session.userId },
+    select: {
+      notionPageId: true,
+      notionPageTitle: true,
+      frequency: true,
+      sendTime: true,
+      timezone: true,
+      durationDays: true,
+      status: true,
+      startedAt: true,
+      endsAt: true,
+      lastSentAt: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const streak = await prisma.userStreak.findUnique({
+    where: { userId: session.userId },
+    select: { currentStreak: true, longestStreak: true, lastActivityDate: true },
+  });
+
   const exportData = {
     exportedAt: new Date().toISOString(),
     account: {
@@ -89,6 +128,13 @@ export async function GET() {
       isCorrect: a.isCorrect,
       attemptedAt: a.attemptedAt,
     })),
+    questions: questions.map((q) => ({
+      ...q,
+      questionText: decryptField(q.questionText),
+      answerExcerpt: decryptField(q.answerExcerpt),
+    })),
+    digests,
+    streak,
   };
 
   return new NextResponse(JSON.stringify(exportData, null, 2), {

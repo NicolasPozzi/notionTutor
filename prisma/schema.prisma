@@ -24,6 +24,7 @@ model User {
   createdAt         DateTime  @default(now()) @map("created_at")
   updatedAt         DateTime  @updatedAt @map("updated_at")
   lastLoginAt       DateTime? @map("last_login_at")
+  sessionVersion    Int       @default(0) @map("session_version") // bump to revoke all sessions
   deletedAt         DateTime? @map("deleted_at") // Soft delete RGPD
 
   sessions  RevisionSession[]

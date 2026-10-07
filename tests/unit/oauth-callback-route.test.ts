@@ -62,7 +62,11 @@ beforeEach(() => {
   cookieJar.clear();
   cookieJar.set("notion_oauth_state", "state-123");
   cookieJar.set("notion_oauth_verifier", "verifier");
-  prisma.user.upsert.mockResolvedValue({ id: "user-1", notionUserId: "notion-user-1" });
+  prisma.user.upsert.mockResolvedValue({
+    id: "user-1",
+    notionUserId: "notion-user-1",
+    sessionVersion: 3,
+  });
 });
 
 describe("GET /api/auth/notion/callback", () => {
@@ -80,6 +84,7 @@ describe("GET /api/auth/notion/callback", () => {
     expect(createSession).toHaveBeenCalledWith({
       userId: "user-1",
       notionUserId: "notion-user-1",
+      sessionVersion: 3,
     });
   });
 

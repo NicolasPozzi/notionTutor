@@ -4,6 +4,7 @@ import { getPageContent } from "@/lib/adapters/notion";
 import { decrypt } from "@/lib/auth/encryption";
 import { verifySession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { logError } from "@/lib/log";
 import { notionPageId, parse } from "@/lib/validation";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ pageId: string }> }) {
@@ -37,7 +38,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ pag
     const content = await getPageContent(token, pageId);
     return NextResponse.json(content);
   } catch (err) {
-    console.error("Notion page content error:", err);
+    logError("Notion page content error:", err);
     return NextResponse.json(
       { error: "Erreur lors de la récupération du contenu" },
       { status: 500 }

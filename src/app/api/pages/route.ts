@@ -4,6 +4,7 @@ import { searchPages } from "@/lib/adapters/notion";
 import { decrypt } from "@/lib/auth/encryption";
 import { verifySession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { logError } from "@/lib/log";
 
 export async function GET(request: Request) {
   const session = await verifySession();
@@ -39,7 +40,7 @@ export async function GET(request: Request) {
     const result = await searchPages(token, cursor);
     return NextResponse.json({ ...result, notionConnected: true });
   } catch (err) {
-    console.error("Notion pages fetch error:", err);
+    logError("Notion pages fetch error:", err);
 
     if (err instanceof Error && err.message.includes("Circuit breaker")) {
       return NextResponse.json(

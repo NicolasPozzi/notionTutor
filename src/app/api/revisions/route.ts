@@ -6,6 +6,7 @@ import { decrypt, encryptField } from "@/lib/auth/encryption";
 import { verifySession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { MAX_REVISIONS_PER_DAY, revisionQuotaWindowStart } from "@/lib/limits";
+import { logError } from "@/lib/log";
 import { parseJsonBody, startRevisionSchema } from "@/lib/validation";
 
 export async function POST(request: Request) {
@@ -125,7 +126,7 @@ export async function POST(request: Request) {
       questionsTotal: totalQuestions,
     });
   } catch (err) {
-    console.error("Revision session creation error:", err);
+    logError("Revision session creation error:", err);
     return NextResponse.json(
       { error: "Impossible de créer la session de révision" },
       { status: 500 }

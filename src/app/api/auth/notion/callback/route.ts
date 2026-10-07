@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { encrypt } from "@/lib/auth/encryption";
 import { createSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { logError } from "@/lib/log";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -82,11 +83,12 @@ export async function GET(request: Request) {
     await createSession({
       userId: user.id,
       notionUserId: user.notionUserId,
+      sessionVersion: user.sessionVersion,
     });
 
     return NextResponse.redirect(new URL("/dashboard", request.url));
   } catch (err) {
-    console.error("OAuth callback error:", err);
+    logError("OAuth callback error:", err);
     return NextResponse.redirect(new URL("/?error=auth_failed", request.url));
   }
 }
