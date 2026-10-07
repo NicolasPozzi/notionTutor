@@ -33,6 +33,12 @@ export default function ProfilePage() {
     window.location.href = "/api/account/export";
   };
 
+  // Logs out on every device (the server revokes all sessions).
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.href = "/";
+  };
+
   // Story 1.7 — re-run Notion OAuth to choose / change workspace & shared pages
   // (Notion's native consent UI). Also used to reconnect after a disconnect.
   const handleManageNotion = () => {
@@ -244,12 +250,18 @@ export default function ProfilePage() {
           )}
         </div>
 
-        {/* Security link */}
-        <div className="border-t border-border pt-4">
+        {/* Logout + security link */}
+        <div className="flex items-center justify-between border-t border-border pt-4">
           <Link href="/security" className="text-sm text-accent hover:underline">
             🔒 Politique de confidentialité
           </Link>
+          <button onClick={handleLogout} className="btn-ghost text-sm">
+            Se déconnecter
+          </button>
         </div>
+        <p className="text-xs text-text-secondary">
+          La déconnexion s&apos;applique à tous vos appareils.
+        </p>
       </div>
     </main>
   );

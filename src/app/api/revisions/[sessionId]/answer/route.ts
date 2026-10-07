@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { verifySession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { dayKey, dayKeyToDate, nextStreak, storedDateToDayKey } from "@/lib/streak";
 import { answerSchema, parse, parseJsonBody, uuid } from "@/lib/validation";
 
 export async function POST(
@@ -98,46 +99,28 @@ export async function POST(
 }
 
 async function updateStreak(userId: string) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const streak = await prisma.userStreak.findUnique({ where: { userId } });
 
-  const streak = await prisma.userStreak.findUnique({
-    where: { userId },
-  });
-
-  if (!streak || !streak.lastActivityDate) {
-    await prisma.userStreak.upsert({
-      where: { userId },
-      create: {
-        userId,
-        currentStreak: 1,
-        longestStreak: 1,
-        lastActivityDate: today,
-      },
-      update: {
-        currentStreak: 1,
-        longestStreak: 1,
-        lastActivityDate: today,
-      },
-    });
-    return;
-  }
-
-  const lastActivity = new Date(streak.lastActivityDate);
-  lastActivity.setHours(0, 0, 0, 0);
-
-  const diffDays = Math.floor((today.getTime() - lastActivity.getTime()) / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) return; // Already counted today
-
-  const newStreak = diffDays === 1 ? streak.currentStreak + 1 : 1;
-
-  await prisma.userStreak.update({
-    where: { userId },
-    data: {
-      currentStreak: newStreak,
-      longestStreak: Math.max(newStreak, streak.longestStreak),
-      lastActivityDate: today,
+  const next = nextStreak(
+    {
+      currentStreak: streak?.currentStreak ?? 0,
+      longestStreak: streak?.longestStreak ?? 0,
+      lastActivityDay: streak?.lastActivityDate
+        ? storedDateToDayKey(streak.lastActivityDate)
+        : null,
     },
+    dayKey(new Date())
+  );
+  if (!next) return; // Already counted today
+
+  const data = {
+    currentStreak: next.currentStreak,
+    longestStreak: next.longestStreak,
+    lastActivityDate: dayKeyToDate(next.lastActivityDay!),
+  };
+  await prisma.userStreak.upsert({
+    where: { userId },
+    create: { userId, ...data },
+    update: data,
   });
 }

@@ -7,6 +7,7 @@ import { isAuthorizedCron } from "@/lib/auth/cron";
 import { decrypt } from "@/lib/auth/encryption";
 import { prisma } from "@/lib/db";
 import { isDigestDue } from "@/lib/digests/schedule";
+import { logError } from "@/lib/log";
 
 export async function GET(request: Request) {
   if (!isAuthorizedCron(request)) {
@@ -92,7 +93,7 @@ export async function GET(request: Request) {
 
       sent++;
     } catch (err) {
-      console.error(`Digest send error for ${digest.id}:`, err);
+      logError(`Digest send error for ${digest.id}:`, err);
       errors++;
     }
   }

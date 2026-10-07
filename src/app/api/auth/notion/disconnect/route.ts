@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { decrypt } from "@/lib/auth/encryption";
+import { revokeStoredNotionToken } from "@/lib/adapters/notion/oauth";
 import { verifySession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 
@@ -27,17 +27,8 @@ export async function POST() {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  // Already disconnected — treat as success (idempotent).
-  if (user.notionToken) {
-    try {
-      const token = decrypt(user.notionToken);
-      await revokeNotionToken(token);
-    } catch (err) {
-      // Local invalidation below is the authoritative guarantee; a failed
-      // remote revocation (network, token already invalid) must not block it.
-      console.warn("Notion token revocation failed (continuing):", err);
-    }
-  }
+  // Already disconnected (null token) is a no-op: idempotent.
+  await revokeStoredNotionToken(user.notionToken);
 
   await prisma.user.update({
     where: { id: session.userId },
@@ -49,29 +40,4 @@ export async function POST() {
   });
 
   return NextResponse.json({ success: true });
-}
-
-/**
- * Best-effort revocation against Notion's OAuth revoke endpoint.
- * Uses the integration's client credentials (Basic auth) per the OAuth spec.
- */
-async function revokeNotionToken(token: string): Promise<void> {
-  const clientId = process.env.NOTION_CLIENT_ID;
-  const clientSecret = process.env.NOTION_CLIENT_SECRET;
-
-  if (!clientId || !clientSecret) return;
-
-  const response = await fetch("https://api.notion.com/v1/oauth/revoke", {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString("base64")}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ token }),
-  });
-
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`Notion token revoke failed: ${response.status} ${body}`);
-  }
 }
