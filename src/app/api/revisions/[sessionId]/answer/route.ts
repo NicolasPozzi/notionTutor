@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { verifySession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { answerSchema, parse, parseJsonBody, uuid } from "@/lib/validation";
 
 export async function POST(
   request: Request,
@@ -12,16 +13,13 @@ export async function POST(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { sessionId } = await params;
-  const body = await request.json();
-  const { questionId, isCorrect } = body as {
-    questionId: string;
-    isCorrect: boolean;
-  };
+  const parsedId = parse(uuid, (await params).sessionId);
+  if (!parsedId.ok) return parsedId.response;
+  const sessionId = parsedId.data;
 
-  if (!questionId || typeof isCorrect !== "boolean") {
-    return NextResponse.json({ error: "questionId and isCorrect are required" }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request, answerSchema);
+  if (!parsed.ok) return parsed.response;
+  const { questionId, isCorrect } = parsed.data;
 
   // Verify session belongs to user
   const revisionSession = await prisma.revisionSession.findUnique({
@@ -32,32 +30,48 @@ export async function POST(
     return NextResponse.json({ error: "Session not found" }, { status: 404 });
   }
 
-  // Create attempt
-  await prisma.questionAttempt.create({
-    data: {
-      questionId,
-      sessionId,
-      isCorrect,
-    },
+  // The question must belong to this session AND this user: otherwise anyone
+  // could alter another user's question stats (spaced repetition, mastery).
+  const question = await prisma.question.findFirst({
+    where: { id: questionId, sessionId, userId: session.userId },
+    select: { id: true },
   });
 
-  // Update question stats
-  await prisma.question.update({
-    where: { id: questionId },
-    data: {
-      timesAsked: { increment: 1 },
-      timesCorrect: isCorrect ? { increment: 1 } : undefined,
-      lastAskedAt: new Date(),
-    },
+  if (!question) {
+    return NextResponse.json({ error: "Question not found in this session" }, { status: 404 });
+  }
+
+  // One answer per question per session (no inflating progress or streaks).
+  const alreadyAnswered = await prisma.questionAttempt.findFirst({
+    where: { questionId, sessionId },
+    select: { id: true },
   });
 
-  // Update session progress
-  const updatedSession = await prisma.revisionSession.update({
-    where: { id: sessionId },
-    data: {
-      questionsAnswered: { increment: 1 },
-      correctCount: isCorrect ? { increment: 1 } : undefined,
-    },
+  if (alreadyAnswered) {
+    return NextResponse.json({ error: "Question already answered" }, { status: 409 });
+  }
+
+  const updatedSession = await prisma.$transaction(async (tx) => {
+    await tx.questionAttempt.create({
+      data: { questionId, sessionId, isCorrect },
+    });
+
+    await tx.question.update({
+      where: { id: questionId },
+      data: {
+        timesAsked: { increment: 1 },
+        timesCorrect: isCorrect ? { increment: 1 } : undefined,
+        lastAskedAt: new Date(),
+      },
+    });
+
+    return tx.revisionSession.update({
+      where: { id: sessionId },
+      data: {
+        questionsAnswered: { increment: 1 },
+        correctCount: isCorrect ? { increment: 1 } : undefined,
+      },
+    });
   });
 
   // Check if session is complete

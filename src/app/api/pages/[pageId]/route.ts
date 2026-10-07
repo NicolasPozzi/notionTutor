@@ -4,6 +4,7 @@ import { getPageContent } from "@/lib/adapters/notion";
 import { decrypt } from "@/lib/auth/encryption";
 import { verifySession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { notionPageId, parse } from "@/lib/validation";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ pageId: string }> }) {
   const session = await verifySession();
@@ -11,7 +12,9 @@ export async function GET(_request: Request, { params }: { params: Promise<{ pag
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { pageId } = await params;
+  const parsedId = parse(notionPageId, (await params).pageId);
+  if (!parsedId.ok) return parsedId.response;
+  const pageId = parsedId.data;
 
   const user = await prisma.user.findUnique({
     where: { id: session.userId },

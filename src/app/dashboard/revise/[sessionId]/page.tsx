@@ -74,6 +74,12 @@ export default function RevisionPage() {
         body: JSON.stringify({ questionId: question.id, isCorrect }),
       });
 
+      // Already answered (e.g. double click): resync with the server's state.
+      if (res.status === 409) {
+        setFeedback(null);
+        await fetchSession();
+        return;
+      }
       if (!res.ok) throw new Error("Erreur lors de l'envoi");
 
       const result = await res.json();

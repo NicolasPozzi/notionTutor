@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { verifySession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { parse, parseJsonBody, updateDigestSchema, uuid } from "@/lib/validation";
 
 export async function PATCH(
   request: Request,
@@ -12,7 +13,9 @@ export async function PATCH(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { digestId } = await params;
+  const parsedId = parse(uuid, (await params).digestId);
+  if (!parsedId.ok) return parsedId.response;
+  const digestId = parsedId.data;
 
   const digest = await prisma.digest.findUnique({
     where: { id: digestId, userId: session.userId },
@@ -22,13 +25,9 @@ export async function PATCH(
     return NextResponse.json({ error: "Digest not found" }, { status: 404 });
   }
 
-  const body = await request.json();
-  const { frequency, sendTime, durationDays, status } = body as {
-    frequency?: string;
-    sendTime?: string;
-    durationDays?: number | null;
-    status?: string;
-  };
+  const parsed = await parseJsonBody(request, updateDigestSchema);
+  if (!parsed.ok) return parsed.response;
+  const { frequency, sendTime, durationDays, status } = parsed.data;
 
   const updateData: Record<string, unknown> = {};
   if (frequency) updateData.frequency = frequency;
@@ -39,9 +38,7 @@ export async function PATCH(
       ? new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000)
       : null;
   }
-  if (status && ["active", "paused", "completed"].includes(status)) {
-    updateData.status = status;
-  }
+  if (status) updateData.status = status;
 
   const updated = await prisma.digest.update({
     where: { id: digestId },
@@ -60,7 +57,9 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { digestId } = await params;
+  const parsedId = parse(uuid, (await params).digestId);
+  if (!parsedId.ok) return parsedId.response;
+  const digestId = parsedId.data;
 
   const digest = await prisma.digest.findUnique({
     where: { id: digestId, userId: session.userId },

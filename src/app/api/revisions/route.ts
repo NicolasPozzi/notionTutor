@@ -6,6 +6,7 @@ import { decrypt, encryptField } from "@/lib/auth/encryption";
 import { verifySession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { MAX_REVISIONS_PER_DAY, revisionQuotaWindowStart } from "@/lib/limits";
+import { parseJsonBody, startRevisionSchema } from "@/lib/validation";
 
 export async function POST(request: Request) {
   const session = await verifySession();
@@ -13,12 +14,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await request.json();
-  const { notionPageId } = body as { notionPageId: string };
-
-  if (!notionPageId) {
-    return NextResponse.json({ error: "notionPageId is required" }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request, startRevisionSchema);
+  if (!parsed.ok) return parsed.response;
+  const { notionPageId } = parsed.data;
 
   const user = await prisma.user.findUnique({
     where: { id: session.userId },

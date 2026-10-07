@@ -105,8 +105,12 @@ describe("GET /api/cron/send-digests", () => {
 
     await sendDigests(cronRequest());
 
-    const { html, to } = sendEmail.mock.calls[0]![0];
+    const { html, to, headers } = sendEmail.mock.calls[0]![0];
     expect(to).toBe("a@b.c");
+    expect(headers["List-Unsubscribe"]).toMatch(
+      /^<https?:\/\/.+\/api\/digests\/unsubscribe\/unsub>$/
+    );
+    expect(headers["List-Unsubscribe-Post"]).toBe("List-Unsubscribe=One-Click");
     expect(html).not.toContain("<script>");
     expect(html).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
     expect(html).toContain("Mes &lt;notes&gt;");
