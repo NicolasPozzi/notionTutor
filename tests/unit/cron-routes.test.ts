@@ -55,6 +55,30 @@ beforeEach(() => {
   prisma.question.findMany.mockResolvedValue([]);
 });
 
+describe("cron authorization", () => {
+  it.each([
+    ["send-digests", sendDigests],
+    ["cleanup", cleanup],
+  ])("%s fails closed when CRON_SECRET is not configured", async (_name, handler) => {
+    const secret = process.env.CRON_SECRET;
+    delete process.env.CRON_SECRET;
+    try {
+      // Before the fix, this exact header matched `Bearer ${undefined}`.
+      expect((await handler(cronRequest("undefined"))).status).toBe(401);
+      expect((await handler(new Request("http://localhost/api/cron"))).status).toBe(401);
+    } finally {
+      process.env.CRON_SECRET = secret;
+    }
+    expect(prisma.digest.findMany).not.toHaveBeenCalled();
+    expect(prisma.digest.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("rejects a secret of the wrong length or value", async () => {
+    expect((await sendDigests(cronRequest("test-cron-secret-x"))).status).toBe(401);
+    expect((await sendDigests(cronRequest("test-cron-secreT"))).status).toBe(401);
+  });
+});
+
 describe("GET /api/cron/send-digests", () => {
   it("rejects calls without the cron secret", async () => {
     expect((await sendDigests(cronRequest("wrong"))).status).toBe(401);

@@ -79,6 +79,18 @@ npm run ci           # typecheck + lint + format:check + test
 - `.github/workflows/ci.yml` runs typecheck, lint, format, unit tests, build and smoke tests
   on every push to `main` and every pull request.
 
+## 🔒 Database security (Supabase)
+
+The app reaches Postgres only through Prisma (`postgres` role, which bypasses RLS).
+Supabase's auto-generated Data API is locked down by
+`prisma/sql/lock-down-supabase-api.sql`: RLS enabled on every table, and no
+privileges for the public `anon` and `authenticated` roles. `prisma db push`
+doesn't manage this, so re-run the script after creating tables:
+
+```bash
+psql "$DIRECT_URL" -f prisma/sql/lock-down-supabase-api.sql
+```
+
 ## 🎨 Design System
 
 NotionTutor uses a Notion-inspired design system:

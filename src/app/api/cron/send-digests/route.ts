@@ -3,13 +3,13 @@ import { Resend } from "resend";
 
 import { getQuestionGenerator } from "@/lib/adapters/llm";
 import { getPageContent } from "@/lib/adapters/notion";
+import { isAuthorizedCron } from "@/lib/auth/cron";
 import { decrypt } from "@/lib/auth/encryption";
 import { prisma } from "@/lib/db";
 import { isDigestDue } from "@/lib/digests/schedule";
 
 export async function GET(request: Request) {
-  const authHeader = request.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!isAuthorizedCron(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
