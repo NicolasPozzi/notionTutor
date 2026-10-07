@@ -158,7 +158,7 @@ Recommended extensions are listed in `.vscode/extensions.json`. Install them for
 
 | Layer | Technology |
 |-------|------------|
-| Frontend | Next.js 14 (App Router) |
+| Frontend | Next.js 15 (App Router), React 19 |
 | Styling | Tailwind CSS |
 | Language | TypeScript (strict mode) |
 | Database | Supabase PostgreSQL |

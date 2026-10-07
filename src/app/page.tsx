@@ -2,17 +2,19 @@ import Link from "next/link";
 
 import { SessionExpiredBanner } from "@/components/session-expired-banner";
 
-// Next 14: searchParams is a plain object (it only becomes a Promise in Next 15).
-export default function HomePage({
+// Next 15: searchParams is a Promise, awaited here in the server component.
+export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Record<string, string | string[] | undefined>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  const { error } = await searchParams;
+
   return (
     <main className="flex min-h-screen flex-col bg-background">
       {/* Hero Section */}
       <section className="flex flex-1 flex-col items-center justify-center px-6 py-16 text-center">
-        {searchParams.error === "session_expired" && <SessionExpiredBanner />}
+        {error === "session_expired" && <SessionExpiredBanner />}
         <h1 className="text-xl font-semibold text-text-primary">NotionTutor</h1>
         <p className="mt-2 text-lg text-text-secondary">Révisez vos notes Notion avec l&apos;IA</p>
         <p className="mt-4 max-w-md text-base text-text-secondary">
