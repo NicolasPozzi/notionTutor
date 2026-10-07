@@ -68,6 +68,12 @@ export async function GET(request: Request) {
         from: process.env.DIGEST_FROM_EMAIL ?? "NotionTutor <digest@notiontutor.com>",
         to: digest.user.email,
         subject: `📚 ${digest.notionPageTitle ?? "Votre révision"} — Question du jour`,
+        // RFC 8058 one-click unsubscribe (Gmail/Yahoo show a native button);
+        // mail clients POST to the URL, which our POST handler accepts.
+        headers: {
+          "List-Unsubscribe": `<${unsubUrl}>`,
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        },
         html: buildDigestEmail({
           userName: digest.user.name ?? "Utilisateur",
           pageTitle: digest.notionPageTitle ?? page.title,

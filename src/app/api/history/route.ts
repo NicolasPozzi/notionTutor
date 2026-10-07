@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { verifySession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { historyQuerySchema, parse } from "@/lib/validation";
 
 export async function GET(request: Request) {
   const session = await verifySession();
@@ -9,9 +10,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const url = new URL(request.url);
-  const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "20", 10), 50);
-  const offset = parseInt(url.searchParams.get("offset") ?? "0", 10);
+  const query = Object.fromEntries(new URL(request.url).searchParams);
+  const parsed = parse(historyQuerySchema, query);
+  if (!parsed.ok) return parsed.response;
+  const { limit, offset } = parsed.data;
 
   const sessions = await prisma.revisionSession.findMany({
     where: { userId: session.userId },

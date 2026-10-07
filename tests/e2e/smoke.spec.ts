@@ -101,6 +101,15 @@ test.describe("security hardening", () => {
     expect(res.status()).toBeGreaterThanOrEqual(400);
   });
 
+  test("unsubscribe link with an invalid token shows a page, not an error", async ({ page }) => {
+    const errors = trackClientErrors(page);
+    const res = await page.goto("/api/digests/unsubscribe/not-a-real-token");
+
+    expect(res?.status()).toBe(404);
+    await expect(page.getByRole("heading", { name: /Lien invalide/ })).toBeVisible();
+    expect(errors).toEqual([]);
+  });
+
   test("nested paths with a dot are not served anonymously", async ({ page }) => {
     await page.goto("/dashboard/revise/x.png");
     await expect(page).toHaveURL(/\/$/);

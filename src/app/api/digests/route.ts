@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { verifySession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { MAX_ACTIVE_DIGESTS } from "@/lib/limits";
+import { createDigestSchema, parseJsonBody } from "@/lib/validation";
 
 export async function GET() {
   const session = await verifySession();
@@ -38,18 +39,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await request.json();
-  const { notionPageId, notionPageTitle, frequency, sendTime, durationDays } = body as {
-    notionPageId: string;
-    notionPageTitle?: string;
-    frequency?: string;
-    sendTime?: string;
-    durationDays?: number | null;
-  };
-
-  if (!notionPageId) {
-    return NextResponse.json({ error: "notionPageId is required" }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request, createDigestSchema);
+  if (!parsed.ok) return parsed.response;
+  const { notionPageId, notionPageTitle, frequency, sendTime, durationDays } = parsed.data;
 
   // Check if digest already exists for this page
   const existing = await prisma.digest.findFirst({

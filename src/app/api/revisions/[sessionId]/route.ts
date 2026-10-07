@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { decryptField } from "@/lib/auth/encryption";
 import { verifySession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { parse, uuid } from "@/lib/validation";
 
 export async function GET(
   _request: Request,
@@ -13,7 +14,9 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { sessionId } = await params;
+  const parsedId = parse(uuid, (await params).sessionId);
+  if (!parsedId.ok) return parsedId.response;
+  const sessionId = parsedId.data;
 
   const revisionSession = await prisma.revisionSession.findUnique({
     where: { id: sessionId, userId: session.userId },

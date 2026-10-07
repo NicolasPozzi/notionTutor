@@ -5,6 +5,9 @@ import { MAX_ACTIVE_DIGESTS } from "@/lib/limits";
 
 // vi.mock() calls below are hoisted above these imports by Vitest.
 
+const PAGE_ID = "2a1b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
+const OTHER_PAGE_ID = "3b2c4d5e-6f70-4b8c-9d0e-1f2a3b4c5d6e";
+
 const { prisma, verifySession } = vi.hoisted(() => ({
   prisma: { digest: { findFirst: vi.fn(), count: vi.fn(), create: vi.fn() } },
   verifySession: vi.fn(),
@@ -26,18 +29,18 @@ beforeEach(() => {
 
 describe("POST /api/digests", () => {
   it("creates a digest with an unguessable unsubscribe token", async () => {
-    const res = await createDigest(request({ notionPageId: "page-1", notionPageTitle: "Géo" }));
+    const res = await createDigest(request({ notionPageId: PAGE_ID, notionPageTitle: "Géo" }));
 
     expect(res.status).toBe(201);
     const { data } = prisma.digest.create.mock.calls[0]![0];
-    expect(data).toMatchObject({ userId: "user-1", notionPageId: "page-1", frequency: "daily" });
+    expect(data).toMatchObject({ userId: "user-1", notionPageId: PAGE_ID, frequency: "daily" });
     expect(data.unsubscribeToken).toMatch(/^[0-9a-f]{64}$/);
   });
 
   it("caps the number of active digests per user", async () => {
     prisma.digest.count.mockResolvedValue(MAX_ACTIVE_DIGESTS);
 
-    const res = await createDigest(request({ notionPageId: "page-11" }));
+    const res = await createDigest(request({ notionPageId: OTHER_PAGE_ID }));
 
     expect(res.status).toBe(429);
     expect((await res.json()).error).toMatch(/Limite atteinte/);
@@ -50,11 +53,11 @@ describe("POST /api/digests", () => {
 
   it("refuses a second active digest for the same page", async () => {
     prisma.digest.findFirst.mockResolvedValue({ id: "existing" });
-    expect((await createDigest(request({ notionPageId: "page-1" }))).status).toBe(409);
+    expect((await createDigest(request({ notionPageId: PAGE_ID }))).status).toBe(409);
   });
 
   it("returns 401 without a session", async () => {
     verifySession.mockResolvedValue(null);
-    expect((await createDigest(request({ notionPageId: "page-1" }))).status).toBe(401);
+    expect((await createDigest(request({ notionPageId: PAGE_ID }))).status).toBe(401);
   });
 });

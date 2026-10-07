@@ -6,6 +6,8 @@ import { MAX_REVISIONS_PER_DAY } from "@/lib/limits";
 
 // vi.mock() calls below are hoisted above these imports by Vitest.
 
+const PAGE_ID = "2a1b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
+
 const { prisma, verifySession, getPageContent, generateQuestions } = vi.hoisted(() => ({
   prisma: {
     user: { findUnique: vi.fn() },
@@ -29,7 +31,7 @@ beforeEach(() => {
   vi.resetAllMocks();
   verifySession.mockResolvedValue({ userId: "user-1", notionUserId: "notion-1" });
   prisma.user.findUnique.mockResolvedValue({ notionToken: encrypt("ntn_secret") });
-  getPageContent.mockResolvedValue({ pageId: "page-1", title: "Géo", content: "Canberra…" });
+  getPageContent.mockResolvedValue({ pageId: PAGE_ID, title: "Géo", content: "Canberra…" });
   prisma.revisionSession.create.mockResolvedValue({ id: "session-1" });
   prisma.revisionSession.count.mockResolvedValue(0);
   prisma.question.findMany.mockResolvedValue([]);
@@ -41,10 +43,10 @@ beforeEach(() => {
 
 describe("POST /api/revisions", () => {
   it("stores generated questions encrypted, never in plaintext", async () => {
-    const res = await startRevision(request({ notionPageId: "page-1" }));
+    const res = await startRevision(request({ notionPageId: PAGE_ID }));
 
     expect(res.status).toBe(200);
-    expect(getPageContent).toHaveBeenCalledWith("ntn_secret", "page-1");
+    expect(getPageContent).toHaveBeenCalledWith("ntn_secret", PAGE_ID);
 
     const { data } = prisma.question.create.mock.calls[0]![0];
     expect(isEncryptedField(data.questionText)).toBe(true);
@@ -57,7 +59,7 @@ describe("POST /api/revisions", () => {
   it("returns 409 when Notion is disconnected, without touching Notion or the DB", async () => {
     prisma.user.findUnique.mockResolvedValue({ notionToken: null });
 
-    const res = await startRevision(request({ notionPageId: "page-1" }));
+    const res = await startRevision(request({ notionPageId: PAGE_ID }));
 
     expect(res.status).toBe(409);
     expect((await res.json()).notionConnected).toBe(false);
@@ -68,7 +70,7 @@ describe("POST /api/revisions", () => {
   it("enforces the rolling 24h revision quota before calling Notion or OpenAI", async () => {
     prisma.revisionSession.count.mockResolvedValue(MAX_REVISIONS_PER_DAY);
 
-    const res = await startRevision(request({ notionPageId: "page-1" }));
+    const res = await startRevision(request({ notionPageId: PAGE_ID }));
 
     expect(res.status).toBe(429);
     expect((await res.json()).error).toMatch(/Limite atteinte/);
@@ -82,7 +84,7 @@ describe("POST /api/revisions", () => {
 
   it("allows a revision just under the quota", async () => {
     prisma.revisionSession.count.mockResolvedValue(MAX_REVISIONS_PER_DAY - 1);
-    expect((await startRevision(request({ notionPageId: "page-1" }))).status).toBe(200);
+    expect((await startRevision(request({ notionPageId: PAGE_ID }))).status).toBe(200);
   });
 
   it("returns 400 without notionPageId", async () => {
@@ -93,7 +95,7 @@ describe("POST /api/revisions", () => {
     generateQuestions.mockRejectedValue(new Error("Missing credentials"));
     vi.spyOn(console, "error").mockImplementation(() => {});
 
-    const res = await startRevision(request({ notionPageId: "page-1" }));
+    const res = await startRevision(request({ notionPageId: PAGE_ID }));
 
     expect(res.status).toBe(500);
     expect((await res.json()).error).toMatch(/session de révision/);
