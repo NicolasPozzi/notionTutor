@@ -44,6 +44,11 @@ export async function GET(request: Request) {
     // Fetch user info from Notion
     const notionUser = await fetchNotionUser(tokenResponse.access_token);
 
+    // The OAuth token response's `owner` is the person who authorized the app and
+    // carries their email (when the integration has the "user info with email"
+    // capability); /users/me describes the bot, so it's only a fallback.
+    const email = tokenResponse.owner?.user?.person?.email ?? notionUser.email;
+
     // Encrypt the access token before storing
     const encryptedToken = encrypt(tokenResponse.access_token);
 
@@ -52,7 +57,7 @@ export async function GET(request: Request) {
       where: { notionUserId: notionUser.id },
       create: {
         notionUserId: notionUser.id,
-        email: notionUser.email,
+        email,
         name: notionUser.name,
         avatarUrl: notionUser.avatarUrl,
         notionToken: encryptedToken,
@@ -61,7 +66,8 @@ export async function GET(request: Request) {
         lastLoginAt: new Date(),
       },
       update: {
-        email: notionUser.email,
+        // Don't wipe a known email if this login didn't return one.
+        email: email ?? undefined,
         name: notionUser.name,
         avatarUrl: notionUser.avatarUrl,
         notionToken: encryptedToken,
@@ -88,15 +94,15 @@ export async function GET(request: Request) {
 interface NotionTokenResponse {
   access_token: string;
   workspace_id: string;
-  workspace_name: string;
+  workspace_name: string | null;
   bot_id: string;
-  owner: {
-    type: string;
-    user: {
+  owner?: {
+    type: string; // "user" for public integrations; "workspace" has no user
+    user?: {
       id: string;
-      name: string;
-      avatar_url: string | null;
-      person: { email: string } | null;
+      name?: string;
+      avatar_url?: string | null;
+      person?: { email?: string } | null;
     };
   };
 }
