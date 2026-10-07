@@ -42,6 +42,8 @@ test.describe("public pages", () => {
 
     expect(res?.status()).toBe(200);
     await expect(page.getByText("Application error")).toHaveCount(0);
+    // Users must be told their note content is sent to OpenAI (RGPD transparency).
+    await expect(page.getByRole("heading", { name: /Génération par IA/ })).toBeVisible();
     expect(errors).toEqual([]);
   });
 });
