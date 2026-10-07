@@ -62,6 +62,17 @@ test.describe("auth guard", () => {
   });
 });
 
+test("favicon and apple touch icon are declared and served", async ({ page, request }) => {
+  await page.goto("/");
+
+  for (const rel of ["icon", "apple-touch-icon"]) {
+    const href = await page.locator(`head link[rel="${rel}"]`).first().getAttribute("href");
+    expect(href, `<link rel="${rel}">`).toBeTruthy();
+    const res = await request.get(href!);
+    expect(res.status(), href!).toBe(200);
+  }
+});
+
 test("health endpoint responds", async ({ request }) => {
   const res = await request.get("/api/health");
   expect(res.status()).toBe(200);
